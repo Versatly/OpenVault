@@ -26,18 +26,24 @@ import { BM25Engine, hybridSearch } from './search.js';
 
 export const DEFAULT_VAULT_PATH = path.join(os.homedir(), '.openvault');
 
+export interface VaultOptions extends Partial<VaultConfig> {
+  embedder?: (text: string) => Promise<Float32Array>;
+}
+
 export class Vault {
   readonly config: VaultConfig;
   private bm25 = new BM25Engine();
   private cache: EmbeddingCache;
+  private readonly embedder: (text: string) => Promise<Float32Array>;
   private loaded = false;
 
-  constructor(config?: Partial<VaultConfig>) {
+  constructor(config?: VaultOptions) {
     this.config = {
       path: config?.path ?? DEFAULT_VAULT_PATH,
       name: config?.name ?? 'openvault',
     };
     this.cache = new EmbeddingCache(this.config.path);
+    this.embedder = config?.embedder ?? embed;
   }
 
   /** Create vault directory structure and meta.json. Safe to call multiple times. */
@@ -162,7 +168,7 @@ export class Vault {
 
     // Compute embedding immediately — model lazy-loads on first write
     const embText = [title, options.text, ...tags].join(' ');
-    const emb = await embed(embText);
+    const emb = await this.embedder(embText);
     this.cache.set(id, emb);
     this.cache.save();
 
