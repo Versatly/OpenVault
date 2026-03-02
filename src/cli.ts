@@ -11,9 +11,21 @@
  */
 
 import { Command } from 'commander';
+import { createServer as createHttpServer } from 'node:http';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { Vault, DEFAULT_VAULT_PATH } from './vault.js';
+import { createServer as createOpenVaultServer } from './server.js';
 
 const program = new Command();
+
+function parsePort(value: string): number {
+  const parsed = parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
+    throw new Error(`Invalid port: ${value}. Expected an integer between 1 and 65535.`);
+  }
+  return parsed;
+}
 
 program
   .name('openvault')
@@ -37,10 +49,47 @@ program
 
 program
   .command('serve')
-  .description('Start MCP server (stdio transport)')
-  .action(async () => {
-    // Delegate entirely to server.ts — it owns the process from here
-    await import('./server.js');
+  .description('Start MCP server (stdio by default, streamable HTTP with --http)')
+  .option('--http', 'Use streamable HTTP transport on /mcp')
+  .option('--port <port>', 'HTTP port (used with --http)', '3333')
+  .action(async (opts: { http?: boolean; port: string }) => {
+    const { server } = await createOpenVaultServer();
+    if (!opts.http) {
+      await server.connect(new StdioServerTransport());
+      return;
+    }
+
+    const port = parsePort(opts.port);
+    const transport = new StreamableHTTPServerTransport({
+      // Stateless mode keeps deployment simple for local tool clients.
+      sessionIdGenerator: undefined,
+    });
+    await server.connect(transport);
+
+    const httpServer = createHttpServer(async (req, res) => {
+      const url = new URL(req.url ?? '/', `http://${req.headers.host ?? `127.0.0.1:${port}`}`);
+
+      if (url.pathname === '/health') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok' }));
+        return;
+      }
+
+      if (url.pathname !== '/mcp') {
+        res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+        res.end('Not found');
+        return;
+      }
+
+      await transport.handleRequest(req, res);
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      httpServer.once('error', reject);
+      httpServer.listen(port, '0.0.0.0', () => resolve());
+    });
+
+    process.stderr.write(`[openvault] streamable HTTP listening on http://127.0.0.1:${port}/mcp\n`);
   });
 
 // ─── search ───────────────────────────────────────────────────────────────────
