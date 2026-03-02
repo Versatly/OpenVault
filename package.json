@@ -10,9 +10,21 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": ["mcp", "memory", "ai", "agent", "cursor", "claude", "vault", "local-first", "embeddings"],
+  "keywords": [
+    "mcp",
+    "memory",
+    "ai",
+    "agent",
+    "cursor",
+    "claude",
+    "vault",
+    "local-first",
+    "embeddings"
+  ],
   "author": "Versatly Holdings",
   "license": "MIT",
   "dependencies": {
@@ -20,14 +32,28 @@
     "@modelcontextprotocol/sdk": "^1.12.1",
     "commander": "^13.1.0",
     "glob": "^11.0.1",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.0"
   },
   "engines": {
     "node": ">=20.0.0"
   },
-  "files": ["dist", "README.md", "LICENSE"]
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Versatly/OpenVault.git"
+  },
+  "homepage": "https://github.com/Versatly/OpenVault#readme",
+  "bugs": {
+    "url": "https://github.com/Versatly/OpenVault/issues"
+  }
 }
