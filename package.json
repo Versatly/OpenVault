@@ -1,0 +1,33 @@
+{
+  "name": "openvault",
+  "version": "0.1.0",
+  "description": "Local-first agent memory via MCP. Works with Cursor, Claude Code, and any MCP client.",
+  "type": "module",
+  "main": "dist/vault.js",
+  "bin": {
+    "openvault": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["mcp", "memory", "ai", "agent", "cursor", "claude", "vault", "local-first", "embeddings"],
+  "author": "Versatly Holdings",
+  "license": "MIT",
+  "dependencies": {
+    "@huggingface/transformers": "^3.4.1",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "commander": "^13.1.0",
+    "glob": "^11.0.1",
+    "gray-matter": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": ["dist", "README.md", "LICENSE"]
+}
